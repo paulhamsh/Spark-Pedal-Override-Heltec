@@ -1,4 +1,3 @@
-#include <ArduinoJson.h>
 #include "SparkClass.h"
 
 SparkClass::SparkClass()
@@ -288,77 +287,6 @@ void SparkClass::get_serial()
    end_message();  
 }
 
-void SparkClass::create_preset_json (const char *a_preset)
-{
-   int cmd, sub_cmd;
-   int i, siz;
-  
-   const char *Description;
-   const char *UUID;
-   const char *Name;
-   const char *Version;
-   const char *Icon;
-   float BPM;
-   float Param;
-   const char *OnOff;
-   const char *PedalName;
-   int EndFiller;
-
-   cmd =     0x01;
-   sub_cmd = 0x01;
-
-   DynamicJsonDocument preset(4000);
-   deserializeJson(preset, a_preset);
-
-   start_message (cmd, sub_cmd, true);
- 
-   UUID = preset["UUID"];
-   Name = preset["Name"];
-   Version = preset["Version"];
-   Description = preset["Description"];      
-   Icon = preset["Icon"];
-   BPM = preset["BPM"];
-   EndFiller = preset["EndFiller"];
-   
-   add_byte (0x00);
-   add_byte (0x7f);   
-   add_long_string (UUID);
-   add_string (Name);
-   add_string (Version);
-   if (strnlen (Description, STR_LEN-1) > 31)
-      add_long_string (Description);
-   else
-      add_string (Description);
-   add_string(Icon);
-   add_float (BPM);
-
-   
-   add_byte (byte(0x90 + 7));       // always 7 pedals
-
-   JsonArray Pedals = preset["Pedals"]; //[0]["Parameters"];
-   for (JsonVariant pedal : Pedals) {
-      PedalName = pedal["Name"];
-      OnOff = pedal["OnOff"];
-      
-      add_string (PedalName);
-      add_onoff (OnOff);
-      
-      i = 0;
-
-      JsonArray Parameters = pedal["Parameters"];
-      siz = Parameters.size();
-      add_byte ( 0x90 + siz); 
-      
-      for (JsonVariant params: Parameters) {
-         Param = params;
-         add_byte (i++);
-         add_byte (byte(0x91));
-         add_float (Param);
-      }
-   }
-   add_byte (EndFiller);  
-   end_message();
-}
 
 void SparkClass::create_preset (SparkPreset &preset)
 {
